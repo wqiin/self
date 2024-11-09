@@ -197,20 +197,20 @@ bool CGetTask::getDataFromRemote(const std::string & strURL, const TimeSpan & ti
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
     CURL * curl = curl_easy_init();
-	bool bRet = true;//函数返回值
+    bool bRet = true;//函数返回值
     if(curl){
-		std::string strRetJsonData;//存放从SLPI拉取的JSON数据
+	std::string strRetJsonData;//存放从SLPI拉取的JSON数据
         curl_easy_setopt(curl, CURLOPT_URL, strURLTemp.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CGetTask::writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strRetJsonData);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 3000);//设置超时时间3秒
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 3000);//设置超时时间3秒
         CURLcode res = curl_easy_perform(curl);
 
         if(res != CURLE_OK){
             bRet = false;
-		}else {//成功拉取数据后，进行转码
-			strJsData = CGetTask::utf8toAnsi(strRetJsonData);
-		}
+	}else {//成功拉取数据后，进行转码
+	    strJsData = CGetTask::utf8toAnsi(strRetJsonData);
+	}
         curl_easy_cleanup(curl);
     }
 
@@ -221,56 +221,56 @@ bool CGetTask::getDataFromRemote(const std::string & strURL, const TimeSpan & ti
 //utf8字符串转Ansi字符串
 std::string CGetTask::utf8toAnsi(const std::string & strUTF8)
 {
-	if (strUTF8.empty())
-		return std::string("");
+    if (strUTF8.empty())
+	return std::string("");
 
-	int nLength = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
-	std::vector<wchar_t> vecUnicode(nLength, 0);
-	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, vecUnicode.data(), nLength);
+    int nLength = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
+    std::vector<wchar_t> vecUnicode(nLength, 0);
+    MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, vecUnicode.data(), nLength);
 
-	nLength = WideCharToMultiByte(CP_ACP, 0, vecUnicode.data(), -1, NULL, 0, NULL, NULL);
-	std::vector<char> vecAnsi(nLength, 0);
-	WideCharToMultiByte(CP_ACP, 0, vecUnicode.data(), -1, vecAnsi.data(), nLength, NULL, NULL);
+    nLength = WideCharToMultiByte(CP_ACP, 0, vecUnicode.data(), -1, NULL, 0, NULL, NULL);
+    std::vector<char> vecAnsi(nLength, 0);
+    WideCharToMultiByte(CP_ACP, 0, vecUnicode.data(), -1, vecAnsi.data(), nLength, NULL, NULL);
 
-	return std::string(vecAnsi.data());
+    return std::string(vecAnsi.data());
 }
 
 //将jsTask任务信息转换为stTask任务信息
 void CGetTask::convertTask(const Json::Value & jsTask, StTaskInfo & stTask) {
-	//解析任务信息的name字段，提取车厢号，轴号
-	auto parseData = [&stTask](std::string strName)->void {
-		auto && strTrainNo = strName.substr(0, 2);
-		stTask.nCarriageId = std::stoi(strTrainNo); //车厢号转换为数字
+    //解析任务信息的name字段，提取车厢号，轴号
+    auto parseData = [&stTask](std::string strName)->void {
+	auto && strTrainNo = strName.substr(0, 2);
+	stTask.nCarriageId = std::stoi(strTrainNo); //车厢号转换为数字
 
-		//获取括号内的字符串并转换为数字
-		size_t startPos = strName.find('(');
-		size_t endPos = strName.find(')');
-		if (startPos != std::string::npos && endPos != std::string::npos) {
-			const std::string && strUnknownContent = strName.substr(startPos + 1, endPos - startPos - 1);
-			stTask.nUnknown = std::stoi(strUnknownContent); //括号内的无意义字段，转换为数字		
-			strName.erase(startPos, endPos - startPos + 1);// 删除括号和内容
-		}
+	//获取括号内的字符串并转换为数字
+	size_t startPos = strName.find('(');
+	size_t endPos = strName.find(')');
+	if (startPos != std::string::npos && endPos != std::string::npos) {
+	    const std::string && strUnknownContent = strName.substr(startPos + 1, endPos - startPos - 1);
+	    stTask.nUnknown = std::stoi(strUnknownContent); //括号内的无意义字段，转换为数字		
+	    strName.erase(startPos, endPos - startPos + 1);// 删除括号和内容
+	}
 		
-		//提取轴号，删除前两个字节，遍历剩下的字符串并提取数字
-		strName.erase(0, 2); // 删除前两个字符
-		for (char c : strName) {
-			if (std::isdigit(static_cast<unsigned char>(c))) { // 判断是否为数字
-				stTask.nAxleId = stTask.nAxleId * 10 + (c - '0'); // 转换为数字
-			}
-		}
-	};
+	//提取轴号，删除前两个字节，遍历剩下的字符串并提取数字
+	strName.erase(0, 2); // 删除前两个字符
+	for (char c : strName) {
+	    if (std::isdigit(static_cast<unsigned char>(c))) { // 判断是否为数字
+		stTask.nAxleId = stTask.nAxleId * 10 + (c - '0'); // 转换为数字
+	    }
+	}
+    };
 	
-	stTask.strTrainSetName = jsTask["trainsetName"].asString();//车组名称
-	const std::string && strName = jsTask["name"].asString();//任务的name字段
-	parseData(strName);//解析车号和轴号
+    stTask.strTrainSetName = jsTask["trainsetName"].asString();//车组名称
+    const std::string && strName = jsTask["name"].asString();//任务的name字段
+    parseData(strName);//解析车号和轴号
 }
 
 //将jsTask任务信息转换为stTask任务信息
 void CGetTask::convertTask(const std::vector<Json::Value> & vecJsTask, std::vector<StTaskInfo> & vecStTask) {
-	for (const auto & item : vecJsTask) {
-		vecStTask.emplace_back(StTaskInfo{});//原地构造
-		convertTask(item, vecStTask.back());//任务转换
-	}
+    for (const auto & item : vecJsTask) {
+	vecStTask.emplace_back(StTaskInfo{});//原地构造
+	convertTask(item, vecStTask.back());//任务转换
+    }
 }
 
 void CGetTask::setUserName(const std::string & strUserName){
@@ -284,22 +284,22 @@ void CGetTask::setURL(const std::string & strURL){
 
 //设置检测类型
 void CGetTask::setDetectType(const EN_detectType enType){
-	this->m_enDetectType = enType;
+    this->m_enDetectType = enType;
 }
 
 //设置任务过滤的时间段
 void CGetTask::setTimeSpan(const TimeSpan & tmSpan) {
-	this->m_tmSpan = tmSpan;
+    this->m_tmSpan = tmSpan;
 }
 //获取任务过滤的时间段
 
 TimeSpan CGetTask::getTimeSpan() {
-	return this->m_tmSpan;
+    return this->m_tmSpan;
 }
 
 //获取检测类型
 EN_detectType CGetTask::getDetectType() {
-	return this->m_enDetectType;
+    return this->m_enDetectType;
 }
 
 //获取URL地址
@@ -315,16 +315,16 @@ std::string CGetTask::getUserName(){
 CGetTask::CGetTask(const std::string & strURL, const std::string & strUserName, const EN_detectType enDetectType, const TimeSpan & tmSpan){
     this->m_strUserName = strUserName;
     this->m_strURL = strURL;
-	this->m_enDetectType = enDetectType;//默认使用空心轴检测类型
-	this->m_tmSpan = tmSpan;
+    this->m_enDetectType = enDetectType;//默认使用空心轴检测类型
+    this->m_tmSpan = tmSpan;
 }
 
 //构造函数
 CGetTask::CGetTask(){
     this->m_strUserName = "";
     this->m_strURL = "";
-	this->m_enDetectType = EN_detectType::en_Hollow_Axle;//默认使用空心轴检测类型
-	this->m_tmSpan = NOWDAY;//默认使用当前日期
+    this->m_enDetectType = EN_detectType::en_Hollow_Axle;//默认使用空心轴检测类型
+    this->m_tmSpan = NOWDAY;//默认使用当前日期
 }
 
 //返回姓名为m_strUserName的任务信息，以json对象返回，传入参数:bool指针，用以标识调用是否成功
@@ -336,9 +336,9 @@ _error_handle://处理函数错误
         return std::vector<StTaskInfo>();
     }
 
-	//检测类型有效性校验
-	if (!isTypeValid(this->m_enDetectType))
-		goto _error_handle;
+    //检测类型有效性校验
+    if (!isTypeValid(this->m_enDetectType))
+	goto _error_handle;
 
     std::string strJson;//存放从SLPI拉取过来的数据
     if(this->m_strUserName.empty() || this->m_strURL.empty() || !CGetTask::getDataFromRemote(this->m_strURL, this->m_tmSpan, strJson)){//解析JSON数据
@@ -365,19 +365,19 @@ _error_handle://处理函数错误
             if(this->m_strUserName == work.first){//相同姓名
                 for(const auto & taskId : work.second){
                     if(mpTasks.find(taskId) != mpTasks.end()){//任务列表存在该任务ID时，才添加至返回值中
-						//需要判断mpTasks[taskId]的mode，即判断任务层级
-						const Json::Value & jsTask = mpTasks[taskId];
-						const std::string && strTaskMode = jsTask["mode"].asString();//任务mode
+			//需要判断mpTasks[taskId]的mode，即判断任务层级
+			const Json::Value & jsTask = mpTasks[taskId];
+			const std::string && strTaskMode = jsTask["mode"].asString();//任务mode
 						
-						if (std::string("PART") != strTaskMode) {//非PART层级任务，递归遍历
-							const Json::Value & jsChildren = jsTask["children"];
-							getChildren(getChildren, jsChildren, vecRet);//递归遍历其子任务
-						}else {//已经是PART层级任务
-							vecRet.emplace_back(StTaskInfo{});//原地构建
-							CGetTask::convertTask(mpTasks[taskId], vecRet.back());//任务转换为StTaskInfo
-						}	
-                    }
-                }
+			if (std::string("PART") != strTaskMode) {//非PART层级任务，递归遍历
+			    const Json::Value & jsChildren = jsTask["children"];
+			    getChildren(getChildren, jsChildren, vecRet);//递归遍历其子任务
+			}else {//已经是PART层级任务
+			    vecRet.emplace_back(StTaskInfo{});//原地构建
+			    CGetTask::convertTask(mpTasks[taskId], vecRet.back());//任务转换为StTaskInfo
+			}	
+		    }
+		}
             }
         }
     }
@@ -409,51 +409,51 @@ std::optional<std::vector<StTaskInfo>> CGetTask::getTask(const std::string & str
 //从给定的strURL中，返回timeSpan.first开始，timeSpan.second结束，且探伤工名为strUserName和检测类型为strType的任务信息. 注:日期字符串格式为std::string("yyyy-mm-dd"),例如std::string("2024-11-03")，如给定的时间段无效，则使用当前日期
 std::optional<std::vector<StTaskInfo>> CGetTask::getTask(const std::string & strUserName, const std::string & strURL, const TimeSpan & timeSpan, const EN_detectType enDetectType)
 {
-	//检测类型参数有效性判断
-	if (!isTypeValid(enDetectType))
-		return std::nullopt;
+    //检测类型参数有效性判断
+    if (!isTypeValid(enDetectType))
+	return std::nullopt;
 
-	std::string strJson;//存放从SLPI拉取过来的json数据
-	if (strUserName.empty() || !CGetTask::getDataFromRemote(strURL, timeSpan, strJson)) {//解析JSON数据
-		return std::nullopt;
-	}
+    std::string strJson;//存放从SLPI拉取过来的json数据
+    if (strUserName.empty() || !CGetTask::getDataFromRemote(strURL, timeSpan, strJson)) {//解析JSON数据
+	return std::nullopt;
+    }
 
-	Json::Reader reader;
-	Json::Value jsData;
-	if (!reader.parse(strJson, jsData)) {//json解析
-		return std::nullopt;
-	}
+    Json::Reader reader;
+    Json::Value jsData;
+    if (!reader.parse(strJson, jsData)) {//json解析
+	return std::nullopt;
+    }
 
-	//异步启用现场解析任务和探伤工信息
-	std::future<MapTasks> ftTasks = std::async(std::launch::async, getTasksInfo, jsData, enDetectType);
-	std::future<VecWorkers> ftWorkers = std::async(std::launch::async, getWorkersInfo, jsData);
+    //异步启用现场解析任务和探伤工信息
+    std::future<MapTasks> ftTasks = std::async(std::launch::async, getTasksInfo, jsData, enDetectType);
+    std::future<VecWorkers> ftWorkers = std::async(std::launch::async, getWorkersInfo, jsData);
 
-	//阻塞等待解析结束
-	MapTasks && mpTasks = ftTasks.get();//任务信息
-	VecWorkers && vecWorkers = ftWorkers.get();//探伤工被分配任务信息
+    //阻塞等待解析结束
+    MapTasks && mpTasks = ftTasks.get();//任务信息
+    VecWorkers && vecWorkers = ftWorkers.get();//探伤工被分配任务信息
 
-	std::vector<StTaskInfo> vecRet;//函数返回值
-	for (const auto & item : vecWorkers) {
-		for (const auto & work : item.second) {
-			if (strUserName == work.first) {//相同姓名
-				for (const auto & taskId : work.second) {
-					if (mpTasks.find(taskId) != mpTasks.end()) {//任务列表存在该任务ID时，才添加至返回值中
-						//需要判断mpTasks[taskId]的mode，即判断任务层级
-						const Json::Value & jsTask = mpTasks[taskId];
-						const std::string && strTaskMode = jsTask["mode"].asString();//任务mode
+    std::vector<StTaskInfo> vecRet;//函数返回值
+    for (const auto & item : vecWorkers) {
+	for (const auto & work : item.second) {
+	    if (strUserName == work.first) {//相同姓名
+		for (const auto & taskId : work.second) {
+		    if (mpTasks.find(taskId) != mpTasks.end()) {//任务列表存在该任务ID时，才添加至返回值中
+			//需要判断mpTasks[taskId]的mode，即判断任务层级
+			const Json::Value & jsTask = mpTasks[taskId];
+			const std::string && strTaskMode = jsTask["mode"].asString();//任务mode
 
-						if (std::string("PART") != strTaskMode) {//非PART层级任务，递归遍历
-							const Json::Value & jsChildren = jsTask["children"];
-							getChildren(getChildren, jsChildren, vecRet);//递归遍历其子任务
-						}else {//已经是PART层级任务
-							vecRet.emplace_back(StTaskInfo{});//原地构建
-							CGetTask::convertTask(mpTasks[taskId], vecRet.back());//任务转换为StTaskInfo
-						}
-					}
-				}
+			if (std::string("PART") != strTaskMode) {//非PART层级任务，递归遍历
+			    const Json::Value & jsChildren = jsTask["children"];
+			    getChildren(getChildren, jsChildren, vecRet);//递归遍历其子任务
+			}else {//已经是PART层级任务
+			    vecRet.emplace_back(StTaskInfo{});//原地构建
+			    CGetTask::convertTask(mpTasks[taskId], vecRet.back());//任务转换为StTaskInfo
 			}
+		    }
 		}
+	    }
 	}
+    }
 
-	return vecRet;
+    return vecRet;
 }
