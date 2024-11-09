@@ -65,10 +65,10 @@ MapTasks getTasksInfo(const Json::Value & jsData, const EN_detectType enDetectTy
     for(const auto & item : jsArrData){
         const Json::Value & jsTaskTree = item["taskTree"];//提取taskTree字段
 
-		//筛选检测类型为enDetectType的任务
-		const std::string && strDetectType = jsTaskTree["type"].asString();
-		if (strDetectType != g_mpEn2DetectType.at(enDetectType))
-			continue;
+	//筛选检测类型为enDetectType的任务
+	const std::string && strDetectType = jsTaskTree["type"].asString();
+	if (strDetectType != g_mpEn2DetectType.at(enDetectType))
+		continue;
 
         //解析TaskTree中的children字段
         auto getChild = [&mpRet](auto && self, const Json::Value & jsArrChild)->void{
