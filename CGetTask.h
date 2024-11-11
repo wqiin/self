@@ -90,6 +90,32 @@ class CGetTask{
     DISALLOW_COPY_AND_ASSIGN(CGetTask);
 
 public:
+    CGetTask(const std::string & strURL, const std::string & strUserName, const DetectType enDetectType = EN_HOLLOW_AXLE, const TimeSpan & tmSpan = NOWDAY);
+    CGetTask();
+
+public:
+    //默认使用类的成员变量作为过滤条件，从SLPI中拉取信息
+    std::vector<StTaskInfo> getTask(bool * pBool) const;//pBool用以返回调用是否成功
+    std::optional<std::vector<StTaskInfo>> getTask() const;//使用类的成员变量，拉取信息
+
+public://返回引用，可以实现链式调用
+    CGetTask & setUserName(const std::string & strUserName);//设置探伤工名称
+    CGetTask & setURL(const std::string & strURL);//设置URL地址
+    CGetTask & setDetectType(const DetectType enType);//设置检测类型
+    CGetTask & setTimeSpan(const TimeSpan & tmSpan);//设置任务过滤的时间段
+
+    DetectType getDetectType() const;//获取检测类型
+    std::string getURL() const;//获取URL地址
+    std::string getUserName() const;//获取探伤工名称
+    TimeSpan getTimeSpan() const;//获取任务过滤的时间段
+
+private://用以获取或过滤的条件
+    std::string m_strUserName;//用户姓名
+    std::string m_strURL;//SLPI资源URL地址
+    DetectType m_enDetectType;//任务检测类型
+    TimeSpan m_tmSpan;//任务时间段
+
+public:
     //CURL回调写方法
     static std::uint32_t writeCallback(void * contents, std::uint32_t size, std::uint32_t nmemb, void * pUserData);
 
@@ -106,34 +132,8 @@ public:
     static void convertTask(const Json::Value & jsTask, StTaskInfo & stTask);
     static void convertTask(const std::vector<Json::Value> & vecJsTask, std::vector<StTaskInfo> & vecStTask);
 
-public:
-    CGetTask(const std::string & strURL, const std::string & strUserName, const DetectType enDetectType = EN_HOLLOW_AXLE, const TimeSpan & tmSpan = NOWDAY);
-    CGetTask();
-
-public://返回引用，可以实现链式调用
-    CGetTask & setUserName(const std::string & strUserName);//设置探伤工名称
-    CGetTask & setURL(const std::string & strURL);//设置URL地址
-    CGetTask & setDetectType(const DetectType enType);//设置检测类型
-    CGetTask & setTimeSpan(const TimeSpan & tmSpan);//设置任务过滤的时间段
-
-    DetectType getDetectType() const;//获取检测类型
-    std::string getURL() const;//获取URL地址
-    std::string getUserName() const;//获取探伤工名称
-    TimeSpan getTimeSpan() const;//获取任务过滤的时间段
-
-public:
-    //默认使用类的成员变量作为过滤条件，从SLPI中拉取信息
-    std::vector<StTaskInfo> getTask(bool * pBool) const;//pBool用以返回调用是否成功
-    std::optional<std::vector<StTaskInfo>> getTask() const;//使用类的成员变量，拉取信息
-
     //从给定的strURL中，返回timeSpan.first开始，timeSpan.second结束，且探伤工名为strUserName和检测类型为strType的任务信息. 注:日期字符串格式为std::string("yyyy-mm-dd"),例如std::string("2024-11-03")，如给定的时间段无效，则使用当前日期
     static std::optional<std::vector<StTaskInfo>> getTask(const std::string & strUserName, const std::string & strURL, const TimeSpan & timeSpan, const DetectType enDetectType);
-
-private://用以获取或过滤的条件
-    std::string m_strUserName;//用户姓名
-    std::string m_strURL;//SLPI资源URL地址
-    DetectType m_enDetectType;//任务检测类型
-    TimeSpan m_tmSpan;//任务时间段
 };
 
 #endif
